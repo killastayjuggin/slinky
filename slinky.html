@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sl1nkz // PROFILE NODE // DedSec Archive</title>
+
+<!--
+  ============================================================
+  SL1NKZ PROFILE
+  ============================================================
+  HOW TO EDIT THIS PAGE
+  ----------------------------------------------------------
+  1. PROFILE PICTURE: find <img id="profileImg" ...> in the
+     PROFILE HEADER section below and change src="profile.jpg"
+     to point at your own local image file (keep it in the
+     same folder as this index.html, or use a relative path).
+  2. COLOURS: all major colours live in the :root{} block at
+     the top of the <style> tag. Change the CSS variables there
+     and the whole page updates.
+  3. TEXT / CHARACTER INFO: every section is clearly labelled
+     with an HTML comment (search for "BIO SECTION", "APPEARANCE
+     TAB", etc). Edit the text directly inside those blocks.
+  4. TABS: to add/remove a tab, add/remove a button in
+     .tab-nav AND a matching <section class="tab-panel"> with
+     the same data-tab id. The JS at the bottom handles the
+     rest automatically.
+  5. CRT TOGGLE / GLITCH: purely cosmetic, controlled by the
+     .crt-toggle button and the JS "glitch" functions near the
+     bottom of the file. Nothing here performs real network
+     activity — it's all fictional UI decoration. Palette is a
+     grittier, desaturated Watch Dogs 1 style (rust amber + dirty
+     steel blue-gray) — no neon anywhere.
+  ============================================================
+-->
+
+<style>
+  /* ============================================================
+     COLOUR / THEME VARIABLES — edit these to reskin the page
+     ============================================================ */
+  :root{
+    
+    --bg:            #0b0b0a;
+    --bg-grid:       #101110;
+    --panel:         #121211;
+    --panel-2:       #171716;
+    --border:        #333230;
+    --border-hot:    #8a6a3e;
+    --text:          #d6d2c8;
+    --muted:         #6d6a62;
+    --accent:        #b3803f;      /* rust amber — hazard/warning tone */
+    --accent-dim:    #4a3620;
+    --cyan:          #6f8f96;      /* dirty steel blue-gray — ctOS callback */
+    --yellow:        #9c8a4a;      /* faded caution-tape yellow */
+    --online:        #5e8064;      /* muted, dirty green */
+    --warn:          #9c8a4a;
+    --mono:          'Share Tech Mono', 'Courier New', monospace;
+    --sans:          'Chakra Petch', 'Segoe UI', Arial, sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+  }
+
+  /* fallback-safe font import; page still works if this fails to load */
+  @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+  ::selection{ background:var(--accent); color:#000; }
+
+  a{ color:var(--cyan); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+
+  /* ============================================================
+     BACKGROUND — CSS-generated grid + noise, no external images
+     ============================================================ */
+  .bg-layer{
+    position:fixed; inset:0; z-index:-3;
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(179,128,63,0.05), transparent 55%),
+      radial-gradient(ellipse at 88% 15%, rgba(111,143,150,0.04), transparent 50%),
+      repeating-linear-gradient(0deg, var(--bg-grid) 0px, var(--bg-grid) 1px, var(--bg) 1px, var(--bg) 34px),
+      repeating-linear-gradient(90deg, var(--bg-grid) 0px, var(--bg-grid) 1px, var(--bg) 1px, var(--bg) 34px),
+      var(--bg);
+  }
+  .noise-layer{
+    position:fixed; inset:0; z-index:-2; pointer-events:none;
+    opacity:0.06; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ============================================================
+     CRT OVERLAY — scanlines + vignette + flicker, toggleable
+     ============================================================ */
+  .crt-layer{
+    position:fixed; inset:0; z-index:50; pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.18) 3px, rgba(0,0,0,0) 4px
+    );
+    box-shadow:inset 0 0 160px 40px rgba(0,0,0,0.75);
+    animation:flicker 6.5s infinite;
+    transition:opacity .3s ease;
+  }
+  .crt-off .crt-layer{ opacity:0; }
+  @keyframes flicker{
+    0%,100%{ opacity:0.9; }
+    92%{ opacity:0.9; }
+    93%{ opacity:0.72; }
+    94%{ opacity:0.9; }
+    97%{ opacity:0.8; }
+  }
+
+  /* ============================================================
+     LAYOUT SHELL
+     ============================================================ */
+  .wrap{ max-width:1180px; margin:0 auto; padding:18px 16px 60px; }
+
+  /* top status strip */
+  .topbar{
+    display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center;
+    justify-content:space-between;
+    font-family:var(--mono); font-size:11px; letter-spacing:0.06em;
+    color:var(--muted);
+    border-bottom:1px solid var(--border);
+    padding-bottom:10px; margin-bottom:14px;
+  }
+  .topbar .brand{ color:var(--accent); font-weight:700; }
+  .topbar .status-online{ color:var(--online); }
+  .topbar-right{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .crt-toggle{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    font-family:var(--mono); font-size:11px; padding:4px 9px; cursor:pointer;
+    letter-spacing:0.05em;
+  }
+  .crt-toggle:hover, .crt-toggle:focus-visible{ border-color:var(--accent); color:var(--accent); }
+
+  /* ============================================================
+     FAKE TERMINAL / BOOT PANEL
+     ============================================================ */
+  .terminal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    padding:12px 14px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:#8a9c85;
+    margin-bottom:18px;
+    max-height:150px;
+    overflow:hidden;
+  }
+  .terminal .line{ opacity:0; animation:appear 0.25s forwards; white-space:pre-wrap; }
+  .terminal .line.dim{ color:var(--muted); }
+  .terminal .line.hot{ color:var(--accent); }
+  @keyframes appear{ to{ opacity:1; } }
+  .terminal .cursor{
+    display:inline-block; width:7px; height:13px; background:#8a9c85;
+    animation:blink 1s steps(1) infinite; vertical-align:-2px;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* ============================================================
+     PROFILE HEADER
+     ============================================================ */
+  .header{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:22px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    padding:20px;
+    position:relative;
+    margin-bottom:16px;
+  }
+  .header::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--accent), transparent 60%);
+  }
+
+  /* profile picture block */
+  .pic-block{ position:relative; }
+  .pic-frame{
+    position:relative;
+    width:100%; aspect-ratio:1/1;
+    border:2px solid var(--accent);
+    overflow:hidden;
+    background:#000;
+  }
+  .pic-frame img{
+    width:100%; height:100%; object-fit:cover; display:block;
+    filter:contrast(1.05) saturate(0.9);
+  }
+  .pic-placeholder{
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    padding:10px; letter-spacing:0.05em;
+    background:
+      repeating-linear-gradient(45deg, #0f0f10 0 10px, #0a0a0b 10px 20px);
+    border:1px dashed var(--border);
+  }
+  /* scanline + RGB-offset glitch layer over the image */
+  .pic-frame .scan{
+    position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 3px, rgba(0,0,0,0.25) 4px);
+    mix-blend-mode:multiply;
+  }
+  .pic-frame .rgb-shift{
+    position:absolute; inset:0; pointer-events:none; opacity:0;
+  }
+  .pic-frame.glitching .rgb-shift{
+    opacity:1;
+    background:linear-gradient(90deg, rgba(179,128,63,0.28), transparent 4%),
+               linear-gradient(270deg, rgba(111,143,150,0.2), transparent 4%);
+    animation:rgbshift 0.25s steps(2);
+  }
+  @keyframes rgbshift{
+    0%{ transform:translateX(0); }
+    50%{ transform:translateX(3px); }
+    100%{ transform:translateX(0); }
+  }
+  .pic-tag{
+    position:absolute; bottom:6px; left:6px;
+    font-family:var(--mono); font-size:9.5px; color:var(--accent);
+    background:rgba(0,0,0,0.7); padding:2px 5px; letter-spacing:0.05em;
+  }
+
+  .id-block{ display:flex; flex-direction:column; justify-content:center; gap:6px; }
+  .name-primary{
+    font-family:var(--sans); font-weight:700; font-size:32px;
+    letter-spacing:0.01em; line-height:1.1;
+    /* grit, not glow — flat dirty text, no bloom */
+    position:relative;
+  }
+  .alias-line{
+    font-family:var(--mono); font-size:14px; color:var(--cyan);
+    letter-spacing:0.03em;
+  }
+  .glitch-text{ position:relative; display:inline-block; }
+  .glitch-text::before, .glitch-text::after{
+    content:attr(data-text);
+    position:absolute; left:0; top:0; width:100%; overflow:hidden;
+    opacity:0; pointer-events:none;
+  }
+  .glitch-active::before{
+    color:var(--accent); opacity:0.75; clip-path:inset(0 0 60% 0);
+    animation:glitchTop 0.35s steps(2);
+  }
+  .glitch-active::after{
+    color:var(--cyan); opacity:0.75; clip-path:inset(60% 0 0 0);
+    animation:glitchBot 0.35s steps(2);
+  }
+  @keyframes glitchTop{ 0%{transform:translate(0,0);} 50%{transform:translate(-3px,-1px);} 100%{transform:translate(0,0);} }
+  @keyframes glitchBot{ 0%{transform:translate(0,0);} 50%{transform:translate(3px,1px);} 100%{transform:translate(0,0);} }
+
+  .status-row{
+    display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:8px;
+    font-family:var(--mono); font-size:12px;
+  }
+  .status-row .k{ color:var(--muted); }
+  .status-row .v{ color:var(--text); }
+  .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--online); margin-right:5px; }
+
+  .stat-strip{
+    display:flex; flex-wrap:wrap; gap:14px 26px; margin-top:12px;
+    padding-top:10px; border-top:1px solid var(--border);
+    font-family:var(--mono); font-size:11px; color:var(--muted);
+  }
+  .stat-strip b{ color:var(--text); font-weight:600; }
+
+  /* ============================================================
+     TAB NAVIGATION
+     ============================================================ */
+  .tab-nav{
+    display:flex; gap:2px; overflow-x:auto;
+    border:1px solid var(--border); background:var(--panel-2);
+    margin-bottom:0; scrollbar-width:thin;
+  }
+  .tab-btn{
+    flex:0 0 auto;
+    background:transparent; border:none; border-right:1px solid var(--border);
+    color:var(--muted); font-family:var(--mono); font-size:12px;
+    padding:11px 16px; cursor:pointer; letter-spacing:0.06em;
+    white-space:nowrap;
+  }
+  .tab-btn:hover{ color:var(--text); background:rgba(255,255,255,0.02); }
+  .tab-btn:focus-visible{ outline:2px solid var(--cyan); outline-offset:-2px; }
+  .tab-btn.active{
+    color:var(--accent); background:var(--bg);
+    box-shadow:inset 0 -2px 0 var(--accent);
+  }
+  .tab-btn.active::before{ content:"> "; }
+
+  .content-frame{
+    border:1px solid var(--border); border-top:none;
+    background:var(--panel); padding:0;
+    display:grid; grid-template-columns:260px 1fr;
+  }
+  @media (max-width:820px){
+    .content-frame{ grid-template-columns:1fr; }
+  }
+
+  /* left sidebar (persists across tabs — MySpace style) */
+  .sidebar{
+    border-right:1px solid var(--border);
+    padding:18px;
+    display:flex; flex-direction:column; gap:18px;
+  }
+  @media (max-width:820px){
+    .sidebar{ border-right:none; border-bottom:1px solid var(--border); }
+  }
+  .side-box .side-title{
+    font-family:var(--mono); font-size:11px; color:var(--accent);
+    letter-spacing:0.08em; margin-bottom:8px;
+    border-bottom:1px solid var(--border); padding-bottom:4px;
+  }
+  .side-box dl{ margin:0; display:grid; grid-template-columns:auto 1fr; gap:4px 10px; font-size:12.5px; }
+  .side-box dt{ color:var(--muted); font-family:var(--mono); font-size:11px; }
+  .side-box dd{ margin:0; color:var(--text); }
+
+  /* main tab panel area */
+  .main-area{ padding:20px 22px; min-height:340px; }
+  .tab-panel{ display:none; animation:fadeIn 0.35s ease; }
+  .tab-panel.active{ display:block; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:translateY(0);} }
+
+  .section-label{
+    font-family:var(--mono); font-size:11px; color:var(--cyan);
+    letter-spacing:0.1em; margin:22px 0 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-label:first-child{ margin-top:0; }
+  .section-label::after{ content:""; flex:1; height:1px; background:var(--border); }
+
+  p{ margin:0 0 12px; color:#d8d8d6; }
+
+  .quote-block{
+    border-left:2px solid var(--accent);
+    padding:8px 14px; margin:14px 0;
+    font-family:var(--mono); font-style:normal; color:var(--warn);
+    background:rgba(179,128,63,0.06);
+    font-size:13px;
+  }
+
+  .field-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:10px 20px; margin-bottom:16px;
+  }
+  .field{
+    border:1px solid var(--border); padding:9px 11px; background:var(--panel-2);
+  }
+  .field .k{ font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.07em; display:block; margin-bottom:3px; }
+  .field .v{ font-size:13.5px; }
+
+  .tag{
+    display:inline-block; font-family:var(--mono); font-size:10.5px;
+    border:1px solid var(--border-hot); color:var(--accent);
+    padding:2px 7px; letter-spacing:0.05em; margin:2px 4px 2px 0;
+  }
+  .tag.blue{ border-color:var(--cyan); color:var(--cyan); }
+  .tag.yellow{ border-color:var(--yellow); color:var(--yellow); }
+  .tag.muted{ border-color:var(--border); color:var(--muted); }
+
+  /* timeline */
+  .timeline{ position:relative; padding-left:20px; border-left:1px dashed var(--border); }
+  .tl-item{ position:relative; margin-bottom:20px; }
+  .tl-item::before{
+    content:""; position:absolute; left:-25px; top:4px;
+    width:8px; height:8px; background:var(--accent); border-radius:50%;
+  }
+  .tl-year{ font-family:var(--mono); color:var(--accent); font-size:12px; letter-spacing:0.05em; }
+  .tl-flags{ margin:4px 0; }
+  .tl-body{ font-size:13.5px; color:#d8d8d6; }
+
+  /* skills / loadout cards */
+  .skill-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+  .skill-card{
+    border:1px solid var(--border); background:var(--panel-2); padding:12px 14px;
+  }
+  .skill-card .name{ font-weight:600; margin-bottom:4px; }
+  .skill-card .desc{ font-size:12.5px; color:var(--muted); margin-bottom:6px; }
+  .level-tag{
+    font-family:var(--mono); font-size:10px; letter-spacing:0.08em;
+    padding:2px 7px; display:inline-block; border:1px solid var(--online); color:var(--online);
+  }
+
+  /* relations database */
+  .rel-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; }
+  .rel-card{
+    border:1px solid var(--border); background:var(--panel-2); padding:13px 14px;
+    position:relative;
+  }
+  .rel-card::before{
+    content:"REL_FILE"; position:absolute; top:8px; right:10px;
+    font-family:var(--mono); font-size:9px; color:var(--border);
+    letter-spacing:0.08em;
+  }
+  .rel-name{ font-weight:700; font-size:15px; margin-bottom:3px; }
+  .rel-meta{ font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:7px; }
+  .rel-meta b{ color:var(--accent); }
+  .rel-desc{ font-size:12.5px; color:#cfcfcd; }
+
+  /* comments / logs */
+  .empty-log{
+    font-family:var(--mono); font-size:12.5px; color:var(--muted);
+    border:1px dashed var(--border); padding:16px; text-align:center;
+    letter-spacing:0.05em;
+  }
+  .contact-panel{
+    border:1px solid var(--border); background:var(--panel-2);
+    padding:14px; margin-top:14px;
+  }
+  .contact-row{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--border); }
+  .contact-row:last-child{ border-bottom:none; }
+  .contact-row .k{ color:var(--muted); }
+
+  /* easter egg button */
+  .egg-btn{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    font-family:var(--mono); font-size:10.5px; padding:4px 9px; cursor:pointer;
+    margin-top:16px;
+  }
+  .egg-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .egg-output{
+    font-family:var(--mono); font-size:11.5px; color:var(--accent);
+    margin-top:8px; min-height:16px;
+  }
+
+  footer{
+    margin-top:22px; text-align:center; font-family:var(--mono);
+    font-size:10.5px; color:var(--border); letter-spacing:0.08em;
+  }
+
+  /* reduced motion respect */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+
+  @media (max-width:680px){
+    .header{ grid-template-columns:1fr; }
+    .pic-block{ max-width:180px; margin:0 auto; }
+    .name-primary{ font-size:26px; text-align:center; }
+    .alias-line{ text-align:center; }
+    .status-row, .stat-strip{ justify-content:center; text-align:center; }
+  }
+</style>
+</head>
+<body class="crt-on">
+
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="noise-layer" aria-hidden="true"></div>
+<div class="crt-layer" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <!-- ============ TOP STATUS BAR ============ -->
+  <div class="topbar">
+    <div><span class="brand">DEDSEC</span> // PROFILE NODE — UNAUTHORIZED MIRROR</div>
+    <div class="topbar-right">
+      <span>CONNECTION: <span class="status-online">SECURE</span></span>
+      <span>ENCRYPTION: ACTIVE</span>
+      <span>TRACE STATUS: UNKNOWN</span>
+      <button class="crt-toggle" id="crtToggle" aria-pressed="true">[ CRT: ON ]</button>
+    </div>
+  </div>
+
+  <!-- ============ FAKE TERMINAL / BOOT SEQUENCE ============ -->
+  <div class="terminal" id="terminal" aria-hidden="true">
+    <!-- lines are injected by JS below so they "type in"; edit BOOT_LINES in the script if you want to change them -->
+  </div>
+
+  <!-- ============ PROFILE HEADER ============ -->
+  <div class="header">
+    <div class="pic-block">
+      <div class="pic-frame" id="picFrame">
+        <!--
+          REPLACE PROFILE PICTURE HERE:
+          Swap the placeholder div below for an <img> tag once you
+          have a local image, e.g.:
+          <img id="profileImg" src="profile.jpg" alt="Ashton 'Slinky' Black">
+        -->
+        <div class="pic-placeholder">
+		ERR:{NO CTOS PROFILE FOUND}
+        </div>
+        <div class="scan"></div>
+        <div class="rgb-shift"></div>
+      </div>
+      <div class="pic-tag">FILE: SL1NKZ.IMG</div>
+    </div>
+
+    <div class="id-block">
+      <div class="name-primary glitch-text" id="nameGlitch" data-text="ASHTON &quot;SLINKY&quot; BLACK">ASHTON "SLINKY" BLACK</div>
+      <div class="alias-line">@Sl1nkz — ex-Blume turned Hacktivist</div>
+
+      <div class="status-row">
+        <div><span class="dot"></span><span class="v">STATUS: I SEE YOU...</span></div>
+        <div><span class="k">ACCESS LEVEL:</span> <span class="v">ROOT</span></div>
+        <div><span class="k">PROFILE ID:</span> <span class="v">#004471</span></div>
+      </div>
+
+      <div class="stat-strip">
+        <div>Last Login: <b>UNKNOWN</b></div>
+        <div>Profile Views: <b>004471</b></div>
+        <div>Data Integrity: <b>97%</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TABS ============ -->
+  <nav class="tab-nav" id="tabNav" role="tablist" aria-label="Profile sections">
+    <button class="tab-btn active" role="tab" aria-selected="true" data-tab="profile">PROFILE</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="bio">BIO</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="appearance">APPEARANCE</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="personality">PERSONALITY</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="history">HISTORY</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="loadout">SKILLS / LOADOUT</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="relations">RELATIONS</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="logs">LOGS</button>
+  </nav>
+
+  <div class="content-frame">
+    <!-- ============ PERSISTENT SIDEBAR (MySpace-style) ============ -->
+    <aside class="sidebar">
+      <div class="side-box">
+        <div class="side-title">BASIC DATA</div>
+        <dl>
+          <dt>NAME</dt><dd>Ashton Black</dd>
+          <dt>ALIAS</dt><dd>"Slinky" / Sl1nkz</dd>
+          <dt>AGE</dt><dd>45</dd>
+          <dt>GENDER</dt><dd>Male (he/him)</dd>
+          <dt>ORIENT.</dt><dd>Pansexual</dd>
+          <dt>NATION.</dt><dd>British</dd>
+          <dt>OCCUP.</dt><dd>Unemployed</dd>
+          <dt>RESIDES</dt><dd>wouldn't you like to know, Dusan</dd>
+        </dl>
+      </div>
+
+      <div class="side-box">
+        <div class="side-title">ALIGNMENT</div>
+        <dl>
+          <dt>POLITICS</dt><dd>Anarchist</dd>
+          <dt>AFFIL.</dt><dd>None official</dd>
+          <dt>LEANS</dt><dd>DedSec San Francisco</dd>
+        </dl>
+      </div>
+
+      <div class="side-box">
+        <div class="side-title">STATUS</div>
+        <dl>
+          <dt>WANTED</dt><dd style="color:var(--yellow)">By BLUME CORP.</dd>
+          <dt>INCOGNITO</dt><dd>Since ctOS 1.0 unveiling incident</dd>
+        </dl>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN TAB CONTENT ============ -->
+    <div class="main-area">
+
+      <!-- ===== PROFILE TAB ===== -->
+      <section class="tab-panel active" id="tab-profile" role="tabpanel">
+        <div class="section-label">IDENTITY RECORD</div>
+        <div class="field-grid">
+          <div class="field"><span class="k">FULL NAME</span><span class="v">Ashton "Slinky" Black</span></div>
+          <div class="field"><span class="k">USERNAME</span><span class="v">Sl1nkz</span></div>
+          <div class="field"><span class="k">AGE</span><span class="v">45</span></div>
+          <div class="field"><span class="k">PRONOUNS</span><span class="v">He/him</span></div>
+          <div class="field"><span class="k">SEXUALITY</span><span class="v">Pansexual</span></div>
+          <div class="field"><span class="k">NATIONALITY</span><span class="v">British</span></div>
+          <div class="field"><span class="k">OCCUPATION</span><span class="v">Unemployed / in hiding / ex-ctOS developer</span></div>
+          <div class="field"><span class="k">RESIDENCE</span><span class="v">Lives in his van, filled with tech</span></div>
+          <div class="field"><span class="k">ALIGNMENT</span><span class="v">Anarchist</span></div>
+          <div class="field"><span class="k">AFFILIATIONS</span><span class="v">None official — prefers DedSec San Francisco's leaderless model</span></div>
+        </div>
+
+        <div class="section-label">SYSTEM FLAGS</div>
+        <span class="tag yellow">WANTED: BLUME</span>
+        <span class="tag red"> BOUNTY: $70000 ALIVE</span>
+        <span class="tag muted">FORMER ctOS DEV TEAM</span>
+        <span class="tag blue">UNOFFICIAL — DEDSEC SF</span>
+      </section>
+
+      <!-- ===== BIO TAB ===== -->
+      <section class="tab-panel" id="tab-bio" role="tabpanel">
+        <div class="section-label">BIOGRAPHICAL DATA</div>
+        <p>
+          In the early '70s, Ashton and Tobias Frewer were pen pals, bonding over their
+          shared enthusiasm for technology. Tobias eventually helped Ashton move from
+          London to Chicago, where he got a job developing ctOS alongside Raymond
+          Kenney and the rest of the development team.
+        </p>
+        <p>
+          When Raymond Kenney left the senior development team to go into hacktivism, Ashton
+          followed him going into hiding from Blume after an embarrassing hack at the
+          unveiling of ctOS 1.0, where he changed the phone screen on stage to DedSec's
+          logo, despite having no actual affiliation with DedSec Chicago at all.
+        </p>
+        <p>
+          He now lives out of a van filled with tech, unemployed and in hiding. He still
+          keeps in contact with Tobias.
+        </p>
+
+        <div class="section-label">CURRENT SITUATION</div>
+        <p>
+          Off the grid, Ashton is currently unaffiliated with any hacktivist group, 
+          though he's more sympathetic to DedSec San Francisco's leaderless structure than a "Council of Daves"
+          model see HISTORY for the full record.
+        </p>
+
+        <div class="section-label">//WARNING\\</div>
+        <p>
+          Ashton is incredibly intelligent and has escaped Blume surveilance many times.
+          Act with extreme caution and do not approach alone.
+          He is considered Armed and Dangerous.
+
+          IF YOU HAVE ANY INFORMATION ON HIS WHEREABOUTS, REPORT TO YOUR LOCAL BLUME HELP DESK 
+        </p>
+      </section>
+
+      <!-- ===== APPEARANCE TAB ===== -->
+      <section class="tab-panel" id="tab-appearance" role="tabpanel">
+        <div class="section-label">PHYSICAL DATA</div>
+        <div class="field-grid">
+          <div class="field"><span class="k">HAIR</span><span class="v">Gray, mangled and unkempt locs </span></div>
+          <div class="field"><span class="k">EYES</span><span class="v">Blue, often bloodshot</span></div>
+          <div class="field"><span class="k">BUILD</span><span class="v">6'2 50kg. tall but skinny</span></div>
+        </div>
+
+        <div class="section-label">MODIFICATIONS</div>
+        <p>
+          Septum piercing, lip piercing, ear gauges, and a split tongue body
+          modification. Heavily tattooed.
+        </p>
+
+        <div class="section-label">LOADOUT / GEAR</div>
+        <span class="tag">TASER</span>
+        <span class="tag">SINGLE ACTION REVOLVER (given to him on arrival in America)</span>
+      </section>
+
+      <!-- ===== PERSONALITY TAB ===== -->
+      <section class="tab-panel" id="tab-personality" role="tabpanel">
+        <div class="section-label">PERSONALITY MATRIX</div>
+        <p>
+          Extremely paranoid around anyone he hasn't met since before the Blume
+          incident but with people he already knows, he's incredibly welcoming and
+          friendly.
+        </p>
+
+        <div class="quote-block">
+          "SOCIAL PROTOCOL: guarded with strangers // open with known contacts."
+        </div>
+
+        <div class="section-label">NOTES</div>
+        <div class="field-grid">
+          <div class="field"><span class="k">HABITS</span><span class="v">Ex-opioid addict.</span></div>
+          <div class="field"><span class="k">NEURODIVERGENCE</span><span class="v">Undiagnosed/suspected autism</span></div>
+          <div class="field"><span class="k">NICKNAME ORIGIN</span><span class="v">"Slinky" — given by Raymond Kenney, for being good at fitting into and sleeping in tight spaces despite his taller stature</span></div>
+        </div>
+      </section>
+
+      <!-- ===== HISTORY TAB ===== -->
+      <section class="tab-panel" id="tab-history" role="tabpanel">
+        <div class="section-label">RECOVERED TIMELINE — FILE STATUS: PARTIAL</div>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-year">EARLY 1970s</div>
+            <div class="tl-flags"><span class="tag muted">ARCHIVED EVENT</span></div>
+            <div class="tl-body">Ashton and Tobias Frewer become pen pals, bonding over a shared enthusiasm for technology.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">DedSec London</div>
+            <div class="tl-flags"><span class="tag muted">ARCHIVED EVENT</span></div>
+            <div class="tl-body">Ashton travels to London to unite the working classes against the current Prime Minister. He forms DedSec London beside Violet Thorn (MIA) and Michael Brandt. DedSec London originally focused their attacks on the newly built parlement computer systems through "phreaking" attacks. They garnered much support before going silent in 1998.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">RELOCATION</div>
+            <div class="tl-flags"><span class="tag muted">ARCHIVED EVENT</span></div>
+            <div class="tl-body">Tobias helps Ashton move from England to Chicago, where he gets a job developing ctOS with Raymond Kenney and the rest of the team.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">BELLWETHER</div>
+            <div class="tl-flags"><span class="tag muted">HIDDEN EVENT</span></div>
+            <div class="tl-body">Under strict orders by Blume's current CEO, Ashton develops the bellwether and is instructed not to tell anyone on the development team. he keeps a copy of the bellwether code on a floppy disk taped to his thigh</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">DEPARTURE</div>
+            <div class="tl-flags"><span class="tag muted">ARCHIVED EVENT</span></div>
+            <div class="tl-body">Raymond Kenney leaves the ctOS development team to go into hacktivism. Ashton follows him.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">ctOS 1.0 UNVEILING</div>
+            <div class="tl-flags"><span class="tag">RECOVERED DATA</span></div>
+            <div class="tl-body">Ashton hacks the unveiling event, changing the on-stage phone screen to DedSec's logo despite having no actual affiliation with DedSec Chicago. The incident is a public embarrassment for Blume.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">POST-INCIDENT</div>
+            <div class="tl-flags"><span class="tag">DATA CORRUPTED</span></div>
+            <div class="tl-body">Ashton goes into hiding from Blume. Currently living out of a small van.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">CONTACT: DEDSEC CHICAGO</div>
+            <div class="tl-flags"><span class="tag blue">RECOVERED DATA</span></div>
+            <div class="tl-body">Scouted by DedSec Chicago. Impolitely declines, pointing out the flaws in their "Council of Daves" despite not knowing much about DedSec Chicago's actual power structure.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year">ONGOING</div>
+            <div class="tl-flags"><span class="tag muted">ARCHIVED EVENT</span></div>
+            <div class="tl-body">Still keeps in contact with Tobias. Much prefers working alongside DedSec San Francisco because of their more leaderless model.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SKILLS / LOADOUT TAB ===== -->
+      <section class="tab-panel" id="tab-loadout" role="tabpanel">
+        <div class="section-label">TECHNICAL SKILLS</div>
+        <div class="skill-grid">
+          <div class="skill-card">
+            <div class="name">ctOS Development</div>
+            <div class="desc">Former member of the ctOS senior development team under Blume, working alongside Raymond Kenney and Tobias Frewer.</div>
+            <span class="level-tag">EXPERT</span>
+          </div>
+        </div>
+
+        <div class="section-label">WEAPONS</div>
+        <div class="skill-grid">
+          <div class="skill-card">
+            <div class="name">Taser</div>
+            <div class="desc">Standard sidearm. 3 Pronged design with 240v attached to each one</div>
+          </div>
+          <div class="skill-card">
+            <div class="name">Single Action Revolver</div>
+            <div class="desc">Given to him when he first arrived in America.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== RELATIONS TAB ===== -->
+      <section class="tab-panel" id="tab-relations" role="tabpanel">
+        <div class="section-label">RELATIONSHIP DATABASE</div>
+        <div class="rel-grid">
+          <div class="rel-card">
+            <div class="rel-name">Raymond Kenney</div>
+            <div class="rel-meta">RELATION: <b>Mentor / Friend</b> — STATUS: Followed into hacktivism</div>
+            <div class="rel-desc">Former ctOS development colleague. Gave Ashton the nickname "Slinky." When Raymond left the ctOS team for hacktivism, Ashton followed him.</div>
+          </div>
+          <div class="rel-card">
+            <div class="rel-name">Tobias Frewer</div>
+            <div class="rel-meta">RELATION: <b>Childhood Pen Pal</b> — STATUS: Active contact</div>
+            <div class="rel-desc">Became pen pals with Ashton in the early '70s over a shared love of tech. Helped him relocate from England to Chicago. Still in contact.</div>
+          </div>
+          <div class="rel-card">
+            <div class="rel-name">DedSec San Francisco</div>
+            <div class="rel-meta">RELATION: <b>Unofficial Preference</b> — STATUS: No formal affiliation</div>
+            <div class="rel-desc">Ashton much prefers working alongside this branch because of its more leaderless model.</div>
+          </div>
+          <div class="rel-card">
+            <div class="rel-name">Blume / ctOS Team</div>
+            <div class="rel-meta">RELATION: <b>Former Employer</b> — STATUS: Hostile — hiding from</div>
+            <div class="rel-desc">Former ctOS developer. Now in hiding from Blume following the ctOS 1.0 unveiling incident.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== LOGS TAB (comments + contact) ===== -->
+      <section class="tab-panel" id="tab-logs" role="tabpanel">
+        <div class="section-label">COMMENTS</div>
+        <div class="empty-log">NO COMMENTS RECOVERED</div>
+
+        <div class="section-label">CONTACT NODE</div>
+        <div class="contact-panel">
+          <div class="contact-row"><span class="k">SOCIAL HANDLE</span><span>Sl1nkz</span></div>
+          <div class="contact-row"><span class="k">SECURE CHANNEL</span><span>[ UNLISTED ]</span></div>
+          <div class="contact-row"><span class="k">PUBLIC PROFILE</span><span>[ RESTRICTED ]</span></div>
+        </div>
+
+        <!-- small cosmetic easter egg — purely visual, no real network activity -->
+        <button class="egg-btn" id="eggBtn">[ ACCESS DENIED ]</button>
+        <div class="egg-output" id="eggOutput"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <footer>
+    feel free to use this html template as a base for your OCs!
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   JAVASCRIPT — tabs, CRT toggle, boot terminal, glitch effects
+   ============================================================
+   Nothing in this file performs real network requests, scanning,
+   or intrusion of any kind. Everything below is cosmetic UI
+   decoration for a fictional character profile.
+*/
+
+// ---------- TAB SWITCHING ----------
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanels  = document.querySelectorAll('.tab-panel');
+
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => activateTab(btn));
+  // keyboard accessibility: left/right arrow key navigation between tabs
+  btn.addEventListener('keydown', (e) => {
+    const list = Array.from(tabButtons);
+    const i = list.indexOf(btn);
+    if (e.key === 'ArrowRight') { e.preventDefault(); list[(i+1) % list.length].focus(); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); list[(i-1+list.length) % list.length].focus(); }
+  });
+});
+
+function activateTab(btn){
+  tabButtons.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  tabPanels.forEach(p => p.classList.remove('active'));
+
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
+  const target = document.getElementById('tab-' + btn.dataset.tab);
+  if (target) target.classList.add('active');
+}
+
+// ---------- CRT TOGGLE ----------
+const crtToggle = document.getElementById('crtToggle');
+crtToggle.addEventListener('click', () => {
+  const on = document.body.classList.toggle('crt-off');
+  const isOn = !on;
+  crtToggle.textContent = isOn ? '[ CRT: ON ]' : '[ CRT: OFF ]';
+  crtToggle.setAttribute('aria-pressed', String(isOn));
+});
+
+// ---------- FAKE BOOT TERMINAL ----------
+// Edit these lines to change the decorative boot sequence.
+const BOOT_LINES = [
+  { text: '> INITIALIZING PROFILE NODE...', cls:'' },
+  { text: '> USER IDENTIFIED: Sl1nkz', cls:'' },
+  { text: '> LOADING ARCHIVED DATA...', cls:'dim' },
+  { text: '> WARNING: SUBJECT FLAGGED BY BLUME', cls:'hot' },
+  { text: '> CONNECTION ESTABLISHED', cls:'' },
+  { text: '> STATUS: ONLINE   TRACE: UNKNOWN   INTEGRITY: 97%', cls:'dim' },
+];
+
+const terminal = document.getElementById('terminal');
+BOOT_LINES.forEach((line, idx) => {
+  const el = document.createElement('div');
+  el.className = 'line' + (line.cls ? ' ' + line.cls : '');
+  el.style.animationDelay = (idx * 0.28) + 's';
+  el.textContent = line.text;
+  terminal.appendChild(el);
+});
+const cursor = document.createElement('span');
+cursor.className = 'cursor';
+terminal.appendChild(cursor);
+
+// ---------- NAME GLITCH (subtle, occasional, non-annoying) ----------
+const nameGlitch = document.getElementById('nameGlitch');
+function triggerNameGlitch(){
+  nameGlitch.classList.add('glitch-active');
+  setTimeout(() => nameGlitch.classList.remove('glitch-active'), 350);
+}
+setInterval(triggerNameGlitch, 9000);
+
+// ---------- PROFILE IMAGE GLITCH ----------
+const picFrame = document.getElementById('picFrame');
+function triggerPicGlitch(){
+  picFrame.classList.add('glitching');
+  setTimeout(() => picFrame.classList.remove('glitching'), 250);
+}
+setInterval(triggerPicGlitch, 11000);
+
+// ---------- EASTER EGG: fake "ACCESS DENIED" button ----------
+
+const eggBtn = document.getElementById('eggBtn');
+const eggOutput = document.getElementById('eggOutput');
+const eggLines = [
+  'ACCESS DENIED // INSUFFICIENT CLEARANCE',
+  'NICE TRY. LOGGING ATTEMPT....',
+  'ACCESS DENIED // BLUME SECURITY LAYER DETECTED',
+  'root@sl1nkz:~$ sudo make me a sandwich',
+  'ACCESS DENIED // TRY THE FRONT DOOR'
+];
+let eggIndex = 0;
+eggBtn.addEventListener('click', () => {
+  eggOutput.textContent = eggLines[eggIndex % eggLines.length];
+  eggIndex++;
+});
+</script>
+
+</body>
+</html>
